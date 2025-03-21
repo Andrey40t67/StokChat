@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Чат с поддержкой переписки</title>
+    <style>
+        /* Стили остаются те же, что и в предыдущем ответе */
+    </style>
+</head>
+<body>
+
+<div class="chat-wrapper">
+  <div class="chat-header">
+    <h2>Чат</h2>
+    <button class="admin-btn" id="adminBtn">Админ-панель</button>
+  </div>
+
+  <div class="chat-box" id="chatBox"></div>
+
+  <div class="chat-input">
+    <input type="text" id="userInput" placeholder="Введите сообщение..." />
+    <button id="sendMessageBtn">Отправить</button>
+  </div>
+
+  <!-- Админ панель -->
+  <div class="admin-panel" id="adminPanel">
+    <h3>Админ-панель</h3>
+    <div class="admin-messages" id="adminMessages"></div>
+    <div class="admin-input">
+      <input type="text" id="adminInput" placeholder="Ваш ответ..." />
+      <button id="sendAdminBtn">Ответить</button>
+    </div>
+  </div>
+
+  <!-- Ввод кода -->
+  <div class="code-overlay" id="codeOverlay">
+    <p>Введите код доступа</p>
+    <input type="text" id="codeInput" placeholder="Код" />
+    <button onclick="checkCode()">Войти</button>
+  </div>
+</div>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.1.2/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.1.2/firebase-firestore.js"></script>
+
+<script>
+// Инициализация Firebase
+const firebaseConfig = {
+  apiKey: "AIzaSyA6InZS50Qh2k72kV98QuLZrmYiVKeJHqo",
+  authDomain: "alchat-1a0fc.firebaseapp.com",
+  projectId: "alchat-1a0fc",
+  storageBucket: "alchat-1a0fc.firebasestorage.app",
+  messagingSenderId: "411696282164",
+  appId: "1:411696282164:web:119ec7614a36c4ed14e861",
+  measurementId: "G-E9DK98DJGJ"
+};
+
+const app = firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore(app);
+
+// Получаем данные сообщений из Firestore
+function loadMessages() {
+  db.collection('messages').orderBy('timestamp').onSnapshot((querySnapshot) => {
+    chatBox.innerHTML = '';
+    adminMessages.innerHTML = '';
+    querySnapshot.forEach((doc) => {
+      const msg = doc.data();
+      addMessage(msg.text, msg.sender);
+    });
+  });
+}
+
+// Добавление сообщения в чат
+function addMessage(message, sender) {
+  const div = document.createElement('div');
+  div.className = `message ${sender}`;
+  div.textContent = message;
+
+  chatBox.appendChild(div);
+  adminMessages.appendChild(div);
+
+  chatBox.scrollTop = chatBox.scrollHeight;
+  adminMessages.scrollTop = adminMessages.scrollHeight;
+}
+
+// Отправка сообщения от пользователя
+function sendUserMessage() {
+  const userInput = document.getElementById('userInput');
+  const userMessage = userInput.value.trim();
+
+  if (userMessage) {
+    saveMessage(userMessage, 'user');
+    userInput.value = '';
+  }
+}
+
+// Отправка ответа от администратора
+function sendAdminMessage() {
+  const adminInput = document.getElementById('adminInput');
+  const adminMessage = adminInput.value.trim();
+
+  if (adminMessage) {
+    saveMessage(adminMessage, 'admin');
+    adminInput.value = '';
+  }
+}
+
+// Сохранение сообщения в Firestore
+function saveMessage(message, sender) {
+  db.collection('messages').add({
+    text: message,
+    sender: sender,
+    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+  });
+}
+
+// Открытие панели ввода кода
+function openCodePanel() {
+  document.getElementById('codeOverlay').style.display = 'flex';
+}
+
+// Проверка кода для админ-панели
+function checkCode() {
+  const code = document.getElementById('codeInput').value;
+  if (code === '2914') {
+    document.getElementById('codeOverlay').style.display = 'none';
+    document.getElementById('adminPanel').style.display = 'flex';
+    loadMessages();
+  } else {
+    alert('Неверный код!');
+  }
+}
+
+// Инициализация
+document.getElementById('sendMessageBtn').addEventListener('click', sendUserMessage);
+document.getElementById('sendAdminBtn').addEventListener('click', sendAdminMessage);
+document.getElementById('adminBtn').addEventListener('click', openCodePanel);
+
+// Загрузка сообщений при старте
+loadMessages();
+</script>
+
+</body>
+</html>
